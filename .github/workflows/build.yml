@@ -24,7 +24,7 @@ jobs:
     runs-on: windows-2022
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -44,7 +44,7 @@ jobs:
       - name: Build Windows
         run: flutter build windows --release --verbose
       - name: Upload Windows bundle
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: vnt2_app-windows-x64
           path: build/windows/x64/runner/Release/
@@ -55,7 +55,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: Install Linux build dependencies
         run: |
           sudo apt-get update
@@ -92,13 +92,13 @@ jobs:
           linux/build_linux_appimage.sh \
             build/linux/x64/release/bundle x86_64
       - name: Upload Linux bundle
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: vnt2_app-linux-x64
           path: build/linux/x64/release/bundle/
           if-no-files-found: error
       - name: Upload Linux AppImage
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: vnt2_app-linux-x86_64-appimage
           path: vnt2_app-linux-x86_64.AppImage
@@ -109,7 +109,7 @@ jobs:
     runs-on: macos-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -141,7 +141,7 @@ jobs:
       - name: Build macOS
         run: flutter build macos --release
       - name: Upload macOS app
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: vnt2_app-macos
           path: build/macos/Build/Products/Release/vnt2_app.app/
@@ -156,7 +156,7 @@ jobs:
 # android:
 #   runs-on: ubuntu-latest
 #   steps:
-#     - uses: actions/checkout@v4
+#     - uses: actions/checkout@v7
 #     - uses: actions/setup-java@v4
 #       with:
 #         distribution: microsoft
@@ -175,7 +175,7 @@ jobs:
 # ios:
 #   runs-on: macos-latest
 #   steps:
-#     - uses: actions/checkout@v4
+#     - uses: actions/checkout@v7
 #     - uses: subosito/flutter-action@v2
 #       with:
 #         channel: stable
