@@ -1,7 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
 project(runner LANGUAGES CXX)
-set(CMAKE_SYSTEM_VERSION 6.1)
-add_definitions(-D_WIN32_WINNT=0x0601)
 
 # Define the application target. To change its name, change BINARY_NAME in the
 # top-level CMakeLists.txt, not the value here, or `flutter run` will no longer
@@ -21,10 +19,6 @@ add_executable(${BINARY_NAME} WIN32
 # Apply the standard set of build settings. This can be removed for applications
 # that need different build settings.
 apply_standard_settings(${BINARY_NAME})
-
-# CRITICAL: Link YY-Thunks FIRST before any other libraries for Windows 7 support
-# This ensures YY-Thunks can intercept all Win8+ API calls
-target_link_libraries(${BINARY_NAME} PRIVATE "${YY_THUNKS_OBJ}")
 
 # Add preprocessor definitions for the build version.
 target_compile_definitions(${BINARY_NAME} PRIVATE "FLUTTER_VERSION=\"${FLUTTER_VERSION}\"")

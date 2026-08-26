@@ -1,5 +1,6 @@
 # Project-level configuration.
 cmake_minimum_required(VERSION 3.14)
+set(CMAKE_SYSTEM_VERSION 10.0)
 project(vnt2_app LANGUAGES CXX)
 
 # The name of the executable created for the application. Change this to change
@@ -9,39 +10,6 @@ set(BINARY_NAME "vnt2_app")
 # Explicitly opt in to modern CMake behaviors to avoid warnings with recent
 # versions of CMake.
 cmake_policy(VERSION 3.14...3.25)
-
-# YY-Thunks for Windows 7 support
-set(YY_THUNKS_VERSION "1.1.9")
-if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-  set(YY_THUNKS_ARCH "x64")
-else()
-  set(YY_THUNKS_ARCH "x86")
-endif()
-
-set(YY_THUNKS_ROOT "${PROJECT_BINARY_DIR}/yy-thunks/${YY_THUNKS_VERSION}")
-set(YY_THUNKS_PACKAGE "${YY_THUNKS_ROOT}/yy-thunks.${YY_THUNKS_VERSION}.nupkg")
-set(YY_THUNKS_EXTRACT_DIR "${YY_THUNKS_ROOT}/package")
-set(YY_THUNKS_OBJ "${YY_THUNKS_EXTRACT_DIR}/build/native/objs/${YY_THUNKS_ARCH}/YY_Thunks_for_Win7.obj")
-
-if(NOT EXISTS "${YY_THUNKS_OBJ}")
-  file(MAKE_DIRECTORY "${YY_THUNKS_ROOT}")
-  if(NOT EXISTS "${YY_THUNKS_PACKAGE}")
-    message(STATUS "Downloading YY-Thunks ${YY_THUNKS_VERSION}...")
-    file(
-      DOWNLOAD
-      "https://api.nuget.org/v3-flatcontainer/yy-thunks/${YY_THUNKS_VERSION}/yy-thunks.${YY_THUNKS_VERSION}.nupkg"
-      "${YY_THUNKS_PACKAGE}"
-      SHOW_PROGRESS
-    )
-  endif()
-  
-  message(STATUS "Extracting YY-Thunks...")
-  file(MAKE_DIRECTORY "${YY_THUNKS_EXTRACT_DIR}")
-  execute_process(
-    COMMAND ${CMAKE_COMMAND} -E tar xf "${YY_THUNKS_PACKAGE}"
-    WORKING_DIRECTORY "${YY_THUNKS_EXTRACT_DIR}"
-  )
-endif()
 
 # Define build configuration option.
 get_property(IS_MULTICONFIG GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
@@ -62,8 +30,8 @@ set(CMAKE_SHARED_LINKER_FLAGS_PROFILE "${CMAKE_SHARED_LINKER_FLAGS_RELEASE}")
 set(CMAKE_C_FLAGS_PROFILE "${CMAKE_C_FLAGS_RELEASE}")
 set(CMAKE_CXX_FLAGS_PROFILE "${CMAKE_CXX_FLAGS_RELEASE}")
 
-# Use Unicode for all projects.
-add_definitions(-DUNICODE -D_UNICODE)
+# Use Unicode and target the Windows 10 API surface.
+add_definitions(-DUNICODE -D_UNICODE -D_WIN32_WINNT=0x0A00 -DWINVER=0x0A00)
 
 # Compilation settings that should be applied to most targets.
 #
@@ -76,8 +44,6 @@ function(APPLY_STANDARD_SETTINGS TARGET)
   target_compile_options(${TARGET} PRIVATE /EHsc)
   target_compile_definitions(${TARGET} PRIVATE "_HAS_EXCEPTIONS=0")
   target_compile_definitions(${TARGET} PRIVATE "$<$<CONFIG:Debug>:_DEBUG>")
-  # Link YY-Thunks to all targets for Windows 7 support
-  target_link_libraries(${TARGET} PRIVATE "${YY_THUNKS_OBJ}")
 endfunction()
 
 # Flutter library and tool build rules.

@@ -88,7 +88,7 @@ VNTC 2.0 APP 是一个基于 [VNT](https://github.com/vnt-dev/vnt) 的图形化�
 
 ## 平台支持
 
-- Windows
+- Windows 10/11（64 位）
 - macOS
 - Linux
 - Android

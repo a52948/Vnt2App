@@ -3,24 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:vnt2_app/theme/app_theme.dart';
 
-/// 检测是否是 Windows 10 或更高版本
-bool _isWindows10OrGreater() {
-  if (!Platform.isWindows) return false;
-
-  try {
-    final version = Platform.operatingSystemVersion;
-    final match = RegExp(r'(\d+)\.(\d+)').firstMatch(version);
-    if (match != null) {
-      final major = int.parse(match.group(1)!);
-      return major >= 10;
-    }
-  } catch (e) {
-    debugPrint('检测 Windows 版本失败: $e');
-  }
-
-  return true;
-}
-
 /// 自定义标题栏组件
 /// 包含窗口控制按钮：最小化、最大化、置顶、关闭
 class CustomTitleBar extends StatefulWidget {
@@ -79,17 +61,13 @@ class _CustomTitleBarState extends State<CustomTitleBar> with WindowListener {
       return const SizedBox.shrink();
     }
 
-    // Windows 7 使用系统标题栏，不显示自定义标题栏
-    if (Platform.isWindows && !_isWindows10OrGreater()) {
-      return const SizedBox.shrink();
-    }
-
     if (!Platform.isWindows && !Platform.isLinux) {
       return const SizedBox.shrink();
     }
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final backgroundColor = isDark ? AppTheme.darkCardBackground : AppTheme.lightCardBackground;
+    final backgroundColor =
+        isDark ? AppTheme.darkCardBackground : AppTheme.lightCardBackground;
 
     return Container(
       height: 40,
@@ -145,7 +123,9 @@ class _CustomTitleBarState extends State<CustomTitleBar> with WindowListener {
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
-                        color: isDark ? AppTheme.darkTextPrimary : AppTheme.lightTextPrimary,
+                        color: isDark
+                            ? AppTheme.darkTextPrimary
+                            : AppTheme.lightTextPrimary,
                       ),
                     ),
                   ],
@@ -234,7 +214,9 @@ class _CustomTitleBarState extends State<CustomTitleBar> with WindowListener {
           onTap: onPressed,
           hoverColor: isCloseButton
               ? Colors.red.withOpacity(0.8)
-              : (isDark ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.05)),
+              : (isDark
+                  ? Colors.white.withOpacity(0.1)
+                  : Colors.black.withOpacity(0.05)),
           child: Container(
             width: 46,
             height: 40,
@@ -244,7 +226,9 @@ class _CustomTitleBarState extends State<CustomTitleBar> with WindowListener {
               size: 16,
               color: isActive
                   ? Theme.of(context).primaryColor
-                  : (isDark ? AppTheme.darkTextSecondary : AppTheme.lightTextSecondary),
+                  : (isDark
+                      ? AppTheme.darkTextSecondary
+                      : AppTheme.lightTextSecondary),
             ),
           ),
         ),

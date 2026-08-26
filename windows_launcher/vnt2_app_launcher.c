@@ -1,5 +1,7 @@
 #define UNICODE
 #define _UNICODE
+#define WINVER 0x0A00
+#define _WIN32_WINNT 0x0A00
 
 #include <windows.h>
 #include <tlhelp32.h>
@@ -42,28 +44,6 @@ static void log_line(const wchar_t *exe_dir, const wchar_t *message) {
 
 static void show_error(const wchar_t *message) {
   MessageBoxW(NULL, message, L"VNT App Launcher", MB_OK | MB_ICONERROR);
-}
-
-static void log_system_version(const wchar_t *exe_dir) {
-  OSVERSIONINFOW osvi;
-  ZeroMemory(&osvi, sizeof(osvi));
-  osvi.dwOSVersionInfoSize = sizeof(osvi);
-
-#pragma warning(push)
-#pragma warning(disable : 4996)
-  BOOL ok = GetVersionExW(&osvi);
-#pragma warning(pop)
-
-  if (!ok) {
-    log_line(exe_dir, L"GetVersionExW failed");
-    return;
-  }
-
-  wchar_t message[256];
-  _snwprintf(message, 256, L"os version: major=%lu minor=%lu build=%lu",
-             osvi.dwMajorVersion, osvi.dwMinorVersion, osvi.dwBuildNumber);
-  message[255] = L'\0';
-  log_line(exe_dir, message);
 }
 
 static void log_last_error(const wchar_t *exe_dir, const wchar_t *prefix,
@@ -180,7 +160,6 @@ int APIENTRY wWinMain(HINSTANCE instance, HINSTANCE prev_instance,
   *last_slash = L'\0';
 
   log_line(exe_dir, L"launcher start");
-  log_system_version(exe_dir);
 
   DWORD current_pid = GetCurrentProcessId();
   kill_named_processes(LAUNCHER_EXE_NAME, current_pid, exe_dir);

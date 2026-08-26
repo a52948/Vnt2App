@@ -47,27 +47,6 @@ void _writeBootTrace(String message) {
   }
 }
 
-/// 检测是否是 Windows 10 或更高版本
-bool isWindows10OrGreater() {
-  if (!Platform.isWindows) return false;
-
-  try {
-    final version = Platform.operatingSystemVersion;
-    // Windows 版本格式: "Microsoft Windows [Version 10.0.19045.5247]"
-    // Windows 7: 6.1, Windows 8: 6.2, Windows 8.1: 6.3, Windows 10: 10.0
-    final match = RegExp(r'(\d+)\.(\d+)').firstMatch(version);
-    if (match != null) {
-      final major = int.parse(match.group(1)!);
-      return major >= 10;
-    }
-  } catch (e) {
-    debugPrint('检测 Windows 版本失败: $e');
-  }
-
-  // 默认返回 true，使用自定义标题栏
-  return true;
-}
-
 Future<List<Display>> _safeGetDisplays() async {
   try {
     final primaryDisplay = await screenRetriever.getPrimaryDisplay();
@@ -252,10 +231,7 @@ Future<void> main(List<String> args) async {
       await windowManager.waitUntilReadyToShow(windowOptions, () async {
         await windowManager.setTitle('VNT2 APP');
 
-        // 只在 Windows 10+ 上使用自定义标题栏，Windows 7 使用系统标题栏
-        if (!Platform.isWindows || isWindows10OrGreater()) {
-          await windowManager.setTitleBarStyle(TitleBarStyle.hidden);
-        }
+        await windowManager.setTitleBarStyle(TitleBarStyle.hidden);
 
         await windowManager.setMinimumSize(minimumWindowSize);
 

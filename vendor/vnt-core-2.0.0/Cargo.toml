@@ -59,9 +59,3 @@ widestring = "1.2"
 [build-dependencies]
 prost-build = "0.14"
 protoc-bin-vendored = "3.0.0"
-
-[target.x86_64-pc-windows-msvc.build-dependencies]
-thunk-rs = { version = "0.3.3", features = ["win7"] }
-
-[target.i686-pc-windows-msvc.build-dependencies]
-thunk-rs = { version = "0.3.3", features = ["win7"] }
