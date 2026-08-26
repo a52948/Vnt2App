@@ -11,7 +11,6 @@ import 'package:vnt2_app/pages/link_status_page.dart';
 import 'package:vnt2_app/pages/room_page.dart';
 import 'package:vnt2_app/pages/config_list_page.dart';
 import 'package:vnt2_app/pages/settings_page.dart';
-import 'package:vnt2_app/pages/about_page.dart';
 import 'package:vnt2_app/vnt/vnt_manager.dart';
 import 'package:vnt2_app/utils/toast_utils.dart';
 import 'package:vnt2_app/utils/responsive_utils.dart';
@@ -58,7 +57,6 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
         icon: Icons.folder_outlined, activeIcon: Icons.folder, label: '配置'),
     _NavItem(
         icon: Icons.settings_outlined, activeIcon: Icons.settings, label: '设置'),
-    _NavItem(icon: Icons.info_outline, activeIcon: Icons.info, label: '关于'),
   ];
 
   @override
@@ -921,8 +919,6 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
             _refreshSettings = callback;
           },
         ),
-        // 5: 关于
-        AboutPage(isActive: _selectedIndex == 5),
       ],
     );
   }

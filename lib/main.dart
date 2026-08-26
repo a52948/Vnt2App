@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:screen_retriever/screen_retriever.dart';
-import 'package:system_tray/system_tray.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:vnt2_app/chat/chat_manager.dart';
 import 'package:vnt2_app/src/rust/frb_generated.dart';
@@ -22,8 +21,6 @@ import 'package:vnt2_app/system_tray_manager.dart';
 import 'package:vnt2_app/config_manager.dart';
 import 'package:vnt2_app/window_close_behavior.dart';
 
-final SystemTray systemTray = SystemTray();
-final AppWindow appWindow = AppWindow();
 bool startupToTray = false;
 
 bool _isWindowsStartupToTray(List<String> args) {
@@ -238,7 +235,7 @@ Future<void> main(List<String> args) async {
         await windowManager.setMaximizable(false);
 
         // 显示窗口
-        await appWindow.show();
+        await windowManager.show();
       });
     } else {
       // Windows 和 Linux 保持原有逻辑
@@ -286,7 +283,7 @@ Future<void> main(List<String> args) async {
         if (startupToTray) {
           await windowManager.hide();
         } else {
-          await appWindow.show();
+          await windowManager.show();
           await windowManager.focus();
         }
 
@@ -418,7 +415,9 @@ class _MainAppState extends State<MainApp> with WindowListener {
     });
 
     if (Platform.isWindows || Platform.isMacOS || Platform.isLinux) {
-      initSystemTray();
+      unawaited(initSystemTray().catchError((Object error, StackTrace stack) {
+        debugPrint('系统托盘初始化失败: $error');
+      }));
       // 设置窗口关闭拦截
       windowManager.setPreventClose(true);
       windowManager.addListener(this);
@@ -608,7 +607,7 @@ class _MainAppState extends State<MainApp> with WindowListener {
       case WindowCloseBehavior.minimizeToTray:
         debugPrint('隐藏到托盘');
         await _saveCurrentWindowPlacement();
-        appWindow.hide();
+        windowManager.hide();
         return;
       case WindowCloseBehavior.exitApp:
         debugPrint('退出应用');
@@ -619,7 +618,7 @@ class _MainAppState extends State<MainApp> with WindowListener {
           await windowManager.destroy();
           exit(0);
         } else {
-          appWindow.close();
+          windowManager.close();
         }
         return;
     }
@@ -816,50 +815,13 @@ class _MainAppState extends State<MainApp> with WindowListener {
 }
 
 Future<void> initSystemTray() async {
-  String path;
-
-  if (Platform.isLinux) {
-    // Linux 复制到 /tmp 并设置普通用户可读权限
-    try {
-      final iconFile = File('/tmp/vnt2_app_icon.png');
-      final byteData = await rootBundle.load('assets/app_icon.png');
-      await iconFile.writeAsBytes(byteData.buffer.asUint8List());
-      // 设置权限为 644 (所有用户可读)
-      await Process.run('chmod', ['644', iconFile.path]);
-      path = iconFile.path;
-    } catch (e) {
-      path = 'assets/app_icon.png'; // 降级
-    }
-  } else {
-    path = Platform.isWindows ? 'assets/app_icon.ico' : 'assets/app_icon.png';
+  if (!SystemTrayManager.isSupported) {
+    return;
   }
 
-  // 初始化系统托盘
-  await systemTray.initSystemTray(
-    title: "VNT2",
-    toolTip: "VNT2 APP - Virtual Network Tool",
-    iconPath: path,
-  );
-
-  // 初始化 SystemTrayManager，传入全局的 systemTray 实例
-  final trayManager = SystemTrayManager();
-  trayManager.initialize(systemTray);
-
-  // 更新菜单
-  await trayManager.updateMenu();
-
-  // 注册事件处理器
-  systemTray.registerSystemTrayEventHandler((eventName) {
-    if (eventName == kSystemTrayEventClick) {
-      Platform.isWindows
-          ? SystemTrayManager().showMainWindow()
-          : systemTray.popUpContextMenu();
-    } else if (eventName == kSystemTrayEventRightClick) {
-      Platform.isWindows
-          ? systemTray.popUpContextMenu()
-          : SystemTrayManager().showMainWindow();
-    }
-  });
+  final iconPath =
+      Platform.isWindows ? 'assets/app_icon.ico' : 'assets/app_icon.png';
+  await SystemTrayManager().initialize(iconPath);
 }
 
 String getArchitecture() {

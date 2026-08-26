@@ -1,34 +1,34 @@
 import 'dart:io';
-import 'package:system_tray/system_tray.dart';
+import 'package:tray_manager/tray_manager.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:vnt2_app/data_persistence.dart';
 import 'package:vnt2_app/vnt/vnt_manager.dart';
 import 'package:vnt2_app/network_config.dart';
 import 'dart:isolate';
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide MenuItem;
 import 'package:vnt2_app/src/rust/api/vnt_api.dart';
-import 'package:flutter/services.dart' show rootBundle;
-import 'package:path_provider/path_provider.dart';
 
 /// 系统托盘管理器 - 提供全局访问的托盘更新功能
-class SystemTrayManager {
+class SystemTrayManager with TrayListener {
   static final SystemTrayManager _instance = SystemTrayManager._internal();
   factory SystemTrayManager() => _instance;
   SystemTrayManager._internal();
 
-  // 使用外部传入的 SystemTray 实例
-  SystemTray? _systemTray;
+  bool _initialized = false;
 
-  /// 初始化系统托盘实例
-  void initialize(SystemTray systemTray) {
-    _systemTray = systemTray;
-  }
+  static bool get isSupported =>
+      Platform.isWindows || Platform.isMacOS || Platform.isLinux;
 
-  SystemTray get systemTray {
-    if (_systemTray == null) {
-      throw Exception('SystemTrayManager 未初始化，请先调用 initialize()');
+  /// 初始化系统托盘。
+  Future<void> initialize(String iconPath) async {
+    if (!isSupported || _initialized) {
+      return;
     }
-    return _systemTray!;
+    trayManager.addListener(this);
+    await trayManager.setIcon(iconPath);
+    _initialized = true;
+    await updateMenu();
+    await updateTooltip();
   }
 
   Future<void> showMainWindow() async {
@@ -45,8 +45,7 @@ class SystemTrayManager {
   /// 更新系统托盘菜单
   /// [optimisticState] 乐观更新的连接状态，如果为null则使用实际状态
   Future<void> updateMenu({bool? optimisticState}) async {
-    // 只在桌面平台执行
-    if (!Platform.isWindows && !Platform.isMacOS && !Platform.isLinux) {
+    if (!isSupported || !_initialized) {
       return;
     }
 
@@ -55,14 +54,13 @@ class SystemTrayManager {
     // 使用乐观状态或实际状态
     final hasConnection = optimisticState ?? vntManager.hasConnection();
 
-    final Menu menu = Menu();
-    final List<MenuItemBase> menuItems = [];
+    final List<MenuItem> menuItems = [];
 
     // 连接/断开连���
     if (hasConnection) {
-      menuItems.add(MenuItemLabel(
+      menuItems.add(MenuItem(
         label: '断开连接',
-        onClicked: (menuItem) async {
+        onClick: (menuItem) async {
           // 乐观更新：先更新UI为未连接状态
           await updateMenu(optimisticState: false);
           await updateTooltip(optimisticState: false);
@@ -76,12 +74,13 @@ class SystemTrayManager {
         },
       ));
     } else {
-      menuItems.add(MenuItemLabel(
+      menuItems.add(MenuItem(
         label: '连接默认配置',
-        onClicked: (menuItem) async {
+        onClick: (menuItem) async {
           final defaultKey = await dataPersistence.loadDefaultKey();
           if (defaultKey != null && defaultKey.isNotEmpty) {
-            final config = configs.where((c) => c.itemKey == defaultKey).firstOrNull;
+            final config =
+                configs.where((c) => c.itemKey == defaultKey).firstOrNull;
             if (config != null) {
               await _connectConfig(config);
             }
@@ -90,15 +89,15 @@ class SystemTrayManager {
       ));
     }
 
-    menuItems.add(MenuSeparator());
+    menuItems.add(MenuItem.separator());
 
     // 配置列表子菜单
     if (configs.isNotEmpty) {
-      final List<MenuItemBase> configMenuItems = [];
+      final List<MenuItem> configMenuItems = [];
       for (final config in configs) {
-        configMenuItems.add(MenuItemLabel(
+        configMenuItems.add(MenuItem(
           label: config.configName,
-          onClicked: (menuItem) async {
+          onClick: (menuItem) async {
             // 如果已有连接，先断开
             if (vntManager.hasConnection()) {
               // 乐观更新：先更新UI为未连接状态
@@ -113,53 +112,51 @@ class SystemTrayManager {
         ));
       }
 
-      menuItems.add(SubMenu(
+      menuItems.add(MenuItem.submenu(
         label: '配置列表',
-        children: configMenuItems,
+        submenu: Menu(items: configMenuItems),
       ));
-      menuItems.add(MenuSeparator());
+      menuItems.add(MenuItem.separator());
     }
 
     // 显示主界面
-    menuItems.add(MenuItemLabel(
+    menuItems.add(MenuItem(
       label: '显示主界面',
-      onClicked: (menuItem) async {
+      onClick: (menuItem) async {
         await showMainWindow();
       },
     ));
 
     // 隐藏窗口
-    menuItems.add(MenuItemLabel(
+    menuItems.add(MenuItem(
       label: '隐藏窗口',
-      onClicked: (menuItem) {
+      onClick: (menuItem) {
         windowManager.hide();
       },
     ));
 
-    menuItems.add(MenuSeparator());
+    menuItems.add(MenuItem.separator());
 
     // 退出
-    menuItems.add(MenuItemLabel(
+    menuItems.add(MenuItem(
       label: '退出',
-      onClicked: (menuItem) async {
+      onClick: (menuItem) async {
         if (vntManager.hasConnection()) {
           await vntManager.removeAll();
         }
         windowManager.setPreventClose(false);
-        // 使用exit退出应用
+        await trayManager.destroy();
         exit(0);
       },
     ));
 
-    menu.buildFrom(menuItems);
-    await systemTray.setContextMenu(menu);
+    await trayManager.setContextMenu(Menu(items: menuItems));
   }
 
   /// 更新系统托盘tooltip
   /// [optimisticState] 乐观更新的连接状态，如果为null则使用实际状态
   Future<void> updateTooltip({bool? optimisticState}) async {
-    // 只在桌面平台执行
-    if (!Platform.isWindows && !Platform.isMacOS && !Platform.isLinux) {
+    if (!isSupported || !_initialized) {
       return;
     }
 
@@ -179,14 +176,27 @@ class SystemTrayManager {
       }
     }
 
-    await systemTray.setToolTip(tooltip);
-    // Linux 上 setToolTip 会重置图标，需要重新设置
-    if (Platform.isLinux) {
-      try {
-        await systemTray.setImage('/tmp/vnt2_app_icon.png');
-      } catch (e) {
-        debugPrint('设置托盘图标失败: $e');
-      }
+    // AppIndicator 在 Linux 上不支持 tooltip。
+    if (!Platform.isLinux) {
+      await trayManager.setToolTip(tooltip);
+    }
+  }
+
+  @override
+  void onTrayIconMouseDown() {
+    if (Platform.isWindows) {
+      showMainWindow();
+    } else if (Platform.isMacOS) {
+      trayManager.popUpContextMenu();
+    }
+  }
+
+  @override
+  void onTrayIconRightMouseDown() {
+    if (Platform.isWindows) {
+      trayManager.popUpContextMenu();
+    } else if (Platform.isMacOS) {
+      showMainWindow();
     }
   }
 

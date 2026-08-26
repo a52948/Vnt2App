@@ -9,7 +9,7 @@ import 'package:vnt2_app/utils/window_restore_guard.dart';
 void main() {
   group('WindowRestoreGuard', () {
     final display = Display(
-      id: 1,
+      id: '1',
       size: const Size(1920, 1080),
       visiblePosition: Offset.zero,
       visibleSize: const Size(1920, 1040),

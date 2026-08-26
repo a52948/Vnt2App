@@ -3,11 +3,9 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
-  audioplayers_linux
-  bitsdojo_window_linux
-  record_linux
-  screen_retriever
-  system_tray
+  emoji_picker_flutter
+  screen_retriever_linux
+  tray_manager
   url_launcher_linux
   window_manager
 )

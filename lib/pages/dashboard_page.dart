@@ -1091,7 +1091,7 @@ class _DashboardPageState extends State<DashboardPage> {
             getTooltipColor: (touchedSpot) => isDark
                 ? Colors.grey[800]!.withOpacity(0.9)
                 : Colors.grey[700]!.withOpacity(0.9),
-            tooltipRoundedRadius: 8,
+            tooltipBorderRadius: BorderRadius.circular(8),
             tooltipPadding: EdgeInsets.all(context.spacingXSmall),
             getTooltipItems: (List<LineBarSpot> touchedSpots) {
               return touchedSpots.map((spot) {

@@ -3,11 +3,10 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
-  bitsdojo_window_windows
-  record_windows
-  screen_retriever
+  emoji_picker_flutter
+  screen_retriever_windows
   share_plus
-  system_tray
+  tray_manager
   url_launcher_windows
   window_manager
 )
