@@ -32,7 +32,6 @@ rustflags = ["-C", "target-feature=+crt-static", "-C", "strip=symbols"]
 [target.i686-unknown-linux-musl]
 rustflags = ["-C", "target-feature=+crt-static", "-C", "strip=symbols"]
 
-
 [target.armv7-linux-androideabi]
 ar = "D:/android/android-ndk-r26d-windows/android-ndk-r26d/toolchains/llvm/prebuilt/windows-x86_64/bin/arm-linux-androideabi-ar"
 linker = "D:/android/android-ndk-r26d-windows/android-ndk-r26d/toolchains/llvm/prebuilt/windows-x86_64/bin/armv7a-linux-androideabi21-clang"

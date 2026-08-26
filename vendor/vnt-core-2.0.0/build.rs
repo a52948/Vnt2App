@@ -1,8 +1,4 @@
 fn main() {
-    #[cfg(windows)]
-    {
-        thunk::thunk();
-    }
     if std::env::var_os("PROTOC").is_none() {
         if let Ok(path) = protoc_bin_vendored::protoc_bin_path() {
             unsafe {
