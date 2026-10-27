@@ -58,7 +58,7 @@ dependencies:
   flex_color_picker: ^3.3.0
   sqflite: ^2.3.3+1
   sqflite_common_ffi: ^2.3.4+4
-  sqlite3_flutter_libs: ^0.6.0+eol
+  sqlite3_flutter_libs: ^0.5.0
   path: ^1.9.0
   crypto: ^3.0.7
   mime: ^1.0.6
