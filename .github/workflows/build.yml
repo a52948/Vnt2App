@@ -19,35 +19,29 @@ env:
   FLUTTER_VERSION: 3.47.1
 
 jobs:
-  windows:
-    name: Windows x64
-    runs-on: windows-2022
+  android:
+    name: Android
+    runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v7
-      - name: Set up Rust
-        uses: dtolnay/rust-toolchain@stable
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v4
         with:
-          targets: x86_64-pc-windows-msvc
-      - name: Cache Rust
-        uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: rust -> target
-      - name: Set up Flutter
-        uses: subosito/flutter-action@v2
+          distribution: microsoft
+          java-version: 17
+      - uses: subosito/flutter-action@v2
         with:
           channel: stable
           flutter-version: ${{ env.FLUTTER_VERSION }}
-          cache: true
-      - name: Get dependencies
-        run: flutter pub get
-      - name: Build Windows
-        run: flutter build windows --release --verbose
-      - name: Upload Windows bundle
+      - run: |
+          rustup target add aarch64-linux-android armv7-linux-androideabi
+          rustup target add x86_64-linux-android i686-linux-android
+          flutter pub get
+          flutter build apk --release
+      - name: Upload Android APK
         uses: actions/upload-artifact@v7
         with:
-          name: vnt2_app-windows-x64
-          path: build/windows/x64/runner/Release/
+          name: vnt2_app-android
+          path: build/app/outputs/flutter-apk/app-release.apk
           if-no-files-found: error
 
   linux:
@@ -104,102 +98,3 @@ jobs:
           path: vnt2_app-linux-x86_64.AppImage
           if-no-files-found: error
 
-  macos:
-    name: macOS
-    runs-on: macos-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v7
-      - name: Set up Rust
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: aarch64-apple-darwin,x86_64-apple-darwin
-      - name: Cache Rust
-        uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: rust -> target
-      - name: Set up Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          channel: stable
-          flutter-version: ${{ env.FLUTTER_VERSION }}
-          cache: true
-      - name: Get dependencies
-        run: flutter pub get
-      - name: Fix tun-rs macOS size_of import
-        shell: bash
-        run: |
-          cargo fetch --manifest-path rust/Cargo.toml
-          TUN_FILE=$(find "$HOME/.cargo/registry/src" \
-            -path "*/tun-rs-2.8.8/src/platform/macos/tap/mod.rs" \
-            -type f -print -quit)
-          test -n "$TUN_FILE"
-          if ! grep -q '^use std::mem::size_of;' "$TUN_FILE"; then
-            sed -i '' '/use std::io;/a\
-          use std::mem::size_of;' "$TUN_FILE"
-          fi
-      - name: Build macOS
-        run: flutter build macos --release
-      - name: Upload macOS app
-        uses: actions/upload-artifact@v7
-        with:
-          name: vnt2_app-macos
-          path: build/macos/Build/Products/Release/vnt2_app.app/
-          if-no-files-found: error
-
-# ---------------------------------------------------------------------------
-# Disabled workflows retained for future use.
-# Uncomment and move them back under `jobs` when mobile/release builds return.
-# ---------------------------------------------------------------------------
-
-# Android build (disabled)
-# android:
-#   runs-on: ubuntu-latest
-#   steps:
-#     - uses: actions/checkout@v7
-#     - uses: actions/setup-java@v4
-#       with:
-#         distribution: microsoft
-#         java-version: 17
-#     - uses: subosito/flutter-action@v2
-#       with:
-#         channel: stable
-#         flutter-version: ${{ env.FLUTTER_VERSION }}
-#     - run: |
-#         rustup target add aarch64-linux-android armv7-linux-androideabi
-#         rustup target add x86_64-linux-android i686-linux-android
-#         flutter pub get
-#         flutter build apk --release
-
-# iOS build (disabled)
-# ios:
-#   runs-on: macos-latest
-#   steps:
-#     - uses: actions/checkout@v7
-#     - uses: subosito/flutter-action@v2
-#       with:
-#         channel: stable
-#         flutter-version: ${{ env.FLUTTER_VERSION }}
-#     - run: |
-#         rustup target add aarch64-apple-ios
-#         flutter pub get
-#         flutter build ios --release --no-codesign
-#     # IPA packaging retained from the previous workflow:
-#     # cd build/ios/iphoneos
-#     # mkdir Payload
-#     # mv Runner.app Payload/
-#     # zip -r vnt2_app.ipa Payload
-
-# GitHub Release publishing (disabled)
-# deploy:
-#   needs: [windows, linux, macos]
-#   permissions:
-#     contents: write
-#   runs-on: ubuntu-latest
-#   steps:
-#     - uses: actions/download-artifact@v4
-#       with:
-#         path: artifacts
-#     - uses: softprops/action-gh-release@v2
-#       with:
-#         files: artifacts/**/*
