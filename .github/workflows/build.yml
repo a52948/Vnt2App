@@ -16,7 +16,7 @@ permissions:
 
 env:
   CARGO_TERM_COLOR: always
-  FLUTTER_VERSION: 3.29.2
+  FLUTTER_VERSION: 3.32.5
 
 jobs:
   android:
