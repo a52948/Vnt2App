@@ -32,9 +32,10 @@ jobs:
         with:
           channel: stable
           flutter-version: ${{ env.FLUTTER_VERSION }}
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android armv7-linux-androideabi x86_64-linux-android i686-linux-android
       - run: |
-          rustup target add aarch64-linux-android armv7-linux-androideabi
-          rustup target add x86_64-linux-android i686-linux-android
           flutter pub get
           flutter build apk --release
       - name: Upload Android APK
@@ -43,58 +44,3 @@ jobs:
           name: vnt2_app-android
           path: build/app/outputs/flutter-apk/app-release.apk
           if-no-files-found: error
-
-  linux:
-    name: Linux x64
-    runs-on: ubuntu-24.04
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v7
-      - name: Install Linux build dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            clang \
-            cmake \
-            libayatana-appindicator3-dev \
-            libgtk-3-dev \
-            ninja-build \
-            pkg-config \
-            file \
-            wget
-      - name: Set up Rust
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: x86_64-unknown-linux-gnu
-      - name: Cache Rust
-        uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: rust -> target
-      - name: Set up Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          channel: stable
-          flutter-version: ${{ env.FLUTTER_VERSION }}
-          cache: true
-      - name: Get dependencies
-        run: flutter pub get
-      - name: Build Linux
-        run: flutter build linux --release
-      - name: Build Linux AppImage
-        run: |
-          chmod +x linux/build_linux_appimage.sh
-          linux/build_linux_appimage.sh \
-            build/linux/x64/release/bundle x86_64
-      - name: Upload Linux bundle
-        uses: actions/upload-artifact@v7
-        with:
-          name: vnt2_app-linux-x64
-          path: build/linux/x64/release/bundle/
-          if-no-files-found: error
-      - name: Upload Linux AppImage
-        uses: actions/upload-artifact@v7
-        with:
-          name: vnt2_app-linux-x86_64-appimage
-          path: vnt2_app-linux-x86_64.AppImage
-          if-no-files-found: error
-
