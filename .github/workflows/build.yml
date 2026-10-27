@@ -2,9 +2,9 @@ name: Desktop Build
 
 on:
   push:
-    branches: [main]
+    branches: [main, codex/fix]
   pull_request:
-    branches: [main]
+    branches: [main, codex/fix]
   workflow_dispatch:
 
 concurrency:
